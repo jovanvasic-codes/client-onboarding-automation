@@ -18,7 +18,7 @@ This project automates the entire journey from a booked meeting to a fully set u
 * **Data Transformation**: Custom JavaScript expressions used for complex data mapping between APIs.
 
 ## 📸 Workflow Preview
-![Workflow Preview](ClientOnboarding-preview.png
+![Workflow Preview](ClientOnboarding-preview.png)
 
 ## 📂 How to Use
 1. Download the `.json` files from this repository.
