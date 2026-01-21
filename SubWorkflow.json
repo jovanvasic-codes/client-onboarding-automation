@@ -1,0 +1,144 @@
+{
+  "name": "SubWorkflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "on-deal-update",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "a2f4357d-60fe-47f1-a029-971ad09dcb0b",
+      "name": "Webhook",
+      "webhookId": "f0aa433c-24f7-49db-9523-872b6f8e2208"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "deal",
+        "operation": "get",
+        "dealId": {
+          "__rl": true,
+          "value": "={{ $json.body[0].objectId }}",
+          "mode": "id"
+        },
+        "filters": {}
+      },
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.1,
+      "position": [
+        280,
+        0
+      ],
+      "id": "13b4d5a9-3fc3-46f0-94c4-6185541cb453",
+      "name": "Get a deal",
+      "credentials": {
+        "hubspotOAuth2Api": {
+          "id": "UVlsTKSPRUCzw1Tz",
+          "name": "HubSpot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c71386b1-30c3-41de-8107-fef3c10f6266",
+              "leftValue": "={{ $json.body[0].propertyValue }}",
+              "rightValue": "qualifiedtobuy",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        140,
+        0
+      ],
+      "id": "7bcc8e23-9b75-4531-900a-17b54855442d",
+      "name": "Filter1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.properties.n8n_resume_url.value }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        420,
+        0
+      ],
+      "id": "8c27aa28-7078-4062-bbe4-fcf5876c7c15",
+      "name": "HTTP Request"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Filter1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a deal": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter1": {
+      "main": [
+        [
+          {
+            "node": "Get a deal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "320acaaa-9d60-44e2-b41f-61a934310f12",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e64bda8ddde83cd3d8224cd503679bd974d9424fceeaa4d11ecc8783fa2fdda3"
+  },
+  "id": "G5XR6vMZCHmbs8jZ",
+  "tags": []
+}

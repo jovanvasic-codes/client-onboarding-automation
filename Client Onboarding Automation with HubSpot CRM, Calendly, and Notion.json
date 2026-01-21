@@ -1,0 +1,459 @@
+{
+  "name": "Client Onboarding Automation with HubSpot CRM, Calendly, and Notion",
+  "nodes": [
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "team": "90151612024",
+        "space": "90156642023",
+        "folder": "90159669058",
+        "list": "901515201691",
+        "name": "=Discovery call - {{ $('Upsert Contact').item.json.properties.firstname.value }} {{ $('Upsert Contact').item.json.properties.lastname.value }}",
+        "additionalFields": {
+          "assignees": [
+            236539379
+          ],
+          "customFieldsJson": "={{\nJSON.stringify([\n  {\n    \"id\": \"6d8b4d9a-24df-402e-94e8-012299fd01b4\",\n    \"value\": (Date.parse($('Booking Received').item.json.payload?.scheduled_event?.start_time || '') || Date.now())\n  },\n  {\n    \"id\": \"9f0bae5a-36a6-40f1-b886-4fe94d7ecb60\",\n    \"value\": (($('Booking Received').item.json.payload?.questions_and_answers || [])\n      .find(q => (q.question || '').toLowerCase().includes('company do you work for'))?.answer) || \"\"\n  },\n  {\n    \"id\": \"0e24eb59-f5f1-421c-804f-cb6e3bd55702\",\n    \"value\": (() => {\n      const label = (($('Booking Received').item.json.payload?.questions_and_answers || [])\n        .find(q => (q.question || '').toLowerCase().includes('hear about us'))?.answer) || \"Other\";\n      const optionMap = {\n        \"Website\": \"aad35ffb-2d3c-47af-a1a7-c0ede4643888\",\n        \"LinkedIn\": \"d6b40e81-cac0-4422-b5a6-5f98f5b9c0d3\",\n        \"Referral\": \"f12a1452-6742-4ac9-a6c2-c6b82bb8f5ce\",\n        \"Google\": \"e8abd9f1-69d0-4d09-8282-2679979907b5\",\n        \"Email\": \"26b4ea1b-2299-47d0-bed8-fb35d78291d5\",\n        \"Other\": \"8785c911-e27b-4ec9-8c18-b821788d228d\"\n      };\n      return optionMap[label] || optionMap[\"Other\"];\n    })()\n  }\n])\n}}",
+          "content": "=First name: {{ $('Booking Received').item.json.payload.first_name || ($('Booking Received').item.json.payload.name || '').split(' ')[0] || '' }}\nLast name: {{ $('Booking Received').item.json.payload.last_name || ($('Booking Received').item.json.payload.name || '').split(' ').slice(1).join(' ') || '' }}\nEmail: {{ $('Booking Received').item.json.payload.email }}\nCompany: {{ $('Booking Received').item.json.payload.questions_and_answers?.find(q => q.question?.includes('company do you work for'))?.answer || '' }}\nPhone: {{ $('Booking Received').item.json.payload.questions_and_answers?.find(q => q.question?.includes('phone number'))?.answer || '' }}\nWebsite: {{ $('Booking Received').item.json.payload.questions_and_answers?.find(q => q.question?.includes('company website'))?.answer || '' }}\nLead Source: {{ $('Booking Received').item.json.payload.questions_and_answers?.find(q => q.question?.includes('hear about us'))?.answer || '' }}\nNotes: {{ $('Booking Received').item.json.payload.questions_and_answers?.find(q => q.question?.includes('project') || q.question?.includes('looking for'))?.answer || '' }}\n\nMeeting: {{ $('Booking Received').item.json.payload.scheduled_event?.name || 'Discovery call' }}\nStart: {{ $('Booking Received').item.json.payload.scheduled_event?.start_time }}\nEnd: {{ $('Booking Received').item.json.payload.scheduled_event?.end_time }}\nTimezone: {{ $('Booking Received').item.json.payload.timezone || '' }}\n\nEvent URL: {{ $('Booking Received').item.json.payload.scheduled_event?.uri || '' }}\nReschedule URL: {{ $('Booking Received').item.json.payload.reschedule_url || '' }}\nCancel URL: {{ $('Booking Received').item.json.payload.cancel_url || '' }}",
+          "priority": "={{ 3 }}",
+          "startDate": "={{ $('Booking Received').item.json.payload.scheduled_event.start_time }}"
+        }
+      },
+      "type": "n8n-nodes-base.clickUp",
+      "typeVersion": 1,
+      "position": [
+        980,
+        0
+      ],
+      "id": "49d65cf2-2c2a-4d26-9d14-ae1799bd6dba",
+      "name": "Create a task",
+      "credentials": {
+        "clickUpOAuth2Api": {
+          "id": "QUGi8TFgKsAc1mqe",
+          "name": "ClickUp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "deal",
+        "operation": "search",
+        "limit": 1,
+        "filterGroupsUi": {
+          "filterGroupsValues": [
+            {
+              "filtersUi": {
+                "filterValues": [
+                  {
+                    "propertyName": "dealname",
+                    "operator": "CONTAINS_TOKEN",
+                    "value": "={{ $('Booking Received').item.json.payload.questions_and_answers[0].answer }}"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.1,
+      "position": [
+        320,
+        0
+      ],
+      "id": "677d0ffa-399e-4091-9fca-02d4a53cd780",
+      "name": "Search for deals",
+      "alwaysOutputData": true,
+      "credentials": {
+        "hubspotOAuth2Api": {
+          "id": "UVlsTKSPRUCzw1Tz",
+          "name": "HubSpot account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        820,
+        0
+      ],
+      "id": "800d15fa-73c2-44e9-b8db-c8f6268820fd",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "resume": "webhook",
+        "httpMethod": "POST",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1300,
+        0
+      ],
+      "id": "b112670f-83a8-4f83-9b78-e50f087b0d1c",
+      "name": "Wait",
+      "webhookId": "b3ada6ee-4ccb-47a9-9f82-2b386364d05e"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "deal",
+        "operation": "update",
+        "dealId": {
+          "__rl": true,
+          "value": "={{ $('Merge').item.json.dealId }}",
+          "mode": "id"
+        },
+        "updateFields": {
+          "customPropertiesUi": {
+            "customPropertiesValues": [
+              {
+                "property": "n8n_resume_url",
+                "value": "={{$execution.resumeUrl}}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.1,
+      "position": [
+        1140,
+        0
+      ],
+      "id": "677d79d3-0cfe-46df-a3d5-1e84c458e3fd",
+      "name": "Update a deal",
+      "credentials": {
+        "hubspotOAuth2Api": {
+          "id": "UVlsTKSPRUCzw1Tz",
+          "name": "HubSpot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "operation": "update",
+        "id": "={{ $('Create a task').item.json.id }}",
+        "updateFields": {
+          "status": "complete"
+        }
+      },
+      "type": "n8n-nodes-base.clickUp",
+      "typeVersion": 1,
+      "position": [
+        1460,
+        0
+      ],
+      "id": "bc83ca90-e8b7-4c36-92c6-815b48b9c9a3",
+      "name": "Update a task",
+      "credentials": {
+        "clickUpOAuth2Api": {
+          "id": "QUGi8TFgKsAc1mqe",
+          "name": "ClickUp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "events": [
+          "invitee.created"
+        ]
+      },
+      "type": "n8n-nodes-base.calendlyTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "3af10f0c-06f4-490f-aae5-fc625ea43505",
+      "name": "Booking Received",
+      "webhookId": "edf55689-bf3d-4231-9a67-4d17654a4f53",
+      "credentials": {
+        "calendlyOAuth2Api": {
+          "id": "akuT5LqyjhFVmbrU",
+          "name": "Calendly account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "email": "={{ $json.payload.email }}",
+        "additionalFields": {
+          "customPropertiesUi": {
+            "customPropertiesValues": [
+              {
+                "property": "lead_source",
+                "value": "={{ $json.payload.questions_and_answers[3].answer.toLowerCase() }}"
+              },
+              {
+                "property": "associatedcompany",
+                "value": "={{ $json.payload.questions_and_answers[0].answer }}"
+              },
+              {
+                "property": "notes",
+                "value": "={{ $json.payload.questions_and_answers[4].answer }}"
+              }
+            ]
+          },
+          "firstName": "={{ $json.payload.first_name }}",
+          "lastName": "={{ $json.payload.last_name }}",
+          "leadStatus": "NEW",
+          "phoneNumber": "={{ $json.payload.questions_and_answers[1].answer }}",
+          "websiteUrl": "={{ $json.payload.questions_and_answers[2].answer }}"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.1,
+      "position": [
+        160,
+        0
+      ],
+      "id": "77db7102-178d-4279-8404-fffa6f96cf78",
+      "name": "Upsert Contact",
+      "credentials": {
+        "hubspotOAuth2Api": {
+          "id": "UVlsTKSPRUCzw1Tz",
+          "name": "HubSpot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f149263f-12c0-423d-9cdb-754938c33d31",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notExists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        480,
+        0
+      ],
+      "id": "31a528f7-c863-4036-a860-197b20231c48",
+      "name": "Deal Found?"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "deal",
+        "stage": "appointmentscheduled",
+        "additionalFields": {
+          "amount": "0",
+          "associatedVids": "={{ $('Upsert Contact').item.json.vid }}",
+          "closeDate": "={{ $('Booking Received').item.json.payload.scheduled_event.start_time }}",
+          "dealName": "={{ $('Booking Received').item.json.payload.questions_and_answers[0].answer }} - {{ $('Booking Received').item.json.payload.questions_and_answers[4].answer }}",
+          "dealType": "existingbusiness",
+          "pipeline": "default"
+        }
+      },
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.1,
+      "position": [
+        660,
+        120
+      ],
+      "id": "7eb40ddc-8b2e-407a-86c4-13de8f0baa7c",
+      "name": "Create a deal with existing business",
+      "credentials": {
+        "hubspotOAuth2Api": {
+          "id": "UVlsTKSPRUCzw1Tz",
+          "name": "HubSpot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "deal",
+        "stage": "appointmentscheduled",
+        "additionalFields": {
+          "amount": "0",
+          "associatedVids": "={{ $('Upsert Contact').item.json.vid }}",
+          "closeDate": "={{ $('Booking Received').item.json.payload.scheduled_event.start_time }}",
+          "dealName": "={{ $('Booking Received').item.json.payload.questions_and_answers[0].answer }} - {{ $('Booking Received').item.json.payload.questions_and_answers[4].answer }}",
+          "dealType": "newbusiness",
+          "pipeline": "default"
+        }
+      },
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.1,
+      "position": [
+        660,
+        -120
+      ],
+      "id": "dc4029c2-48df-4e25-9ad8-939563106e41",
+      "name": "Create a deal with new business",
+      "credentials": {
+        "hubspotOAuth2Api": {
+          "id": "UVlsTKSPRUCzw1Tz",
+          "name": "HubSpot account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Create a task": {
+      "main": [
+        [
+          {
+            "node": "Update a deal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search for deals": {
+      "main": [
+        [
+          {
+            "node": "Deal Found?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Create a task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Update a task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a deal": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a task": {
+      "main": [
+        []
+      ]
+    },
+    "Booking Received": {
+      "main": [
+        [
+          {
+            "node": "Upsert Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert Contact": {
+      "main": [
+        [
+          {
+            "node": "Search for deals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deal Found?": {
+      "main": [
+        [
+          {
+            "node": "Create a deal with new business",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create a deal with existing business",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a deal with existing business": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Create a deal with new business": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ce1d6b0d-662c-4757-8979-93c2fd3eb452",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e64bda8ddde83cd3d8224cd503679bd974d9424fceeaa4d11ecc8783fa2fdda3"
+  },
+  "id": "JIQlIW7vWxwY66Ay",
+  "tags": []
+}
